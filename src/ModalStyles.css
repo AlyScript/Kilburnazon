@@ -1,0 +1,49 @@
+.modal-content {
+    max-height: 80vh;
+    overflow-y: auto;
+    max-width: 90%;
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    position: relative;
+  }
+  
+  .close-button {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    background: #ff6b6b;
+    border: none;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  .close-button:hover {
+    background: #ff3b3b;
+  }
+  
+  .report-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+  }
+  
+  .report-table th,
+  .report-table td {
+    border: 1px solid #ddd;
+    text-align: center;
+    padding: 8px;
+    cursor: pointer;
+  }
+  
+  .report-table th:hover {
+    background-color: #f4f4f4;
+  }
+  
+  .pagination-controls {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+  }
