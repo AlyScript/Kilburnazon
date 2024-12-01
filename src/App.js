@@ -9,6 +9,7 @@ import LeaveApprovalModal from "./components/LeaveApprovalModal";
 import PayrollReportModal from "./components/PayrollReportModal";
 import BirthdayModal from "./components/BirthdayModal";
 import Login from "./components/LoginPage";
+import Navbar from "./components/Navbar"
 
 import "./App.css";
 import "./ReportStyles.css";
@@ -34,6 +35,15 @@ const App = () => {
   const [absenteeismReport, setAbsenteeismReport] = useState([]);
   const [reportFilters, setReportFilters] = useState({ start_date: "", end_date: "" });
   const [currentUser, setCurrentUser] = useState(null);
+  const [isLeaveRequestsModalOpen, setIsLeaveRequestsModalOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const requestsPerPage = 5;
+  const totalPages = Math.ceil(leaveRequests.length / requestsPerPage);
+  const paginatedRequests = leaveRequests.slice(
+    (currentPage - 1) * requestsPerPage,
+    currentPage * requestsPerPage
+  );
+
 
   const fetchCurrentUser = async () => {
     try {
@@ -379,7 +389,10 @@ const App = () => {
 
   return (
     <div className="app">
-      <h1>Employee Directory</h1>
+      {/* <h1>Employee Directory</h1> */}
+
+      {/* Navbar */}
+      <Navbar onLogout={handleLogout} />
 
       {/* Search and Filter */}
       <SearchFilter
@@ -411,6 +424,12 @@ const App = () => {
             <button onClick={() => setIsLeaveRequestOpen(true)}>Request Leave</button>
           </>
         )}
+        <button
+        onClick={() => setIsLeaveRequestsModalOpen(true)}
+        className="bg-purple-500 hover:bg-purple-600 px-4 py-2 rounded shadow"
+      >
+        View Leave Requests
+      </button>
         {/* <button onClick={() => fetchLeaveRequests()}>Refresh Leave Requests</button> */}
       </div>
 
@@ -461,32 +480,40 @@ const App = () => {
       )}
     </div>
 
-      {/* Pending Leave Requests */}
-      <div className="leave-requests">
-        <h2>Pending Leave Requests</h2>
-        {leaveRequests.length > 0 ? (
-          <ul>
-            {leaveRequests.map((request) => (
-              <li key={request.id}>
-                <span>
-                  {request.employee_name} ({request.leave_type} from {request.start_date} to{" "}
-                  {request.end_date})
-                </span>
-                <button
-                  onClick={() => {
-                    setSelectedRequest(request);
-                    setIsApprovalModalOpen(true);
-                  }}
-                >
-                  Review
-                </button>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p>No pending leave requests.</p>
-        )}
-      </div>
+    {/* Leave Requests
+    <div className="mt-8 p-6 bg-white rounded-lg shadow-md">
+      <h2 className="text-2xl font-bold text-gray-800 mb-4">Pending Leave Requests</h2>
+      {leaveRequests.length > 0 ? (
+        <div className="space-y-4">
+          {leaveRequests.map((request) => (
+            <div
+              key={request.id}
+              className="p-4 bg-gray-100 rounded-lg border border-gray-300 hover:shadow-lg transition-shadow flex justify-between items-center"
+            >
+              <div>
+                <p className="text-gray-700">
+                  <span className="font-bold">{request.employee_name}</span> ({request.leave_type})
+                </p>
+                <p className="text-sm text-gray-500">
+                  From: {request.start_date} To: {request.end_date}
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  setSelectedRequest(request);
+                  setIsApprovalModalOpen(true);
+                }}
+                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded shadow"
+              >
+                Review
+              </button>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="text-gray-500 text-center">No pending leave requests.</p>
+      )}
+    </div> */}
 
       {/* Add Employee Modal */}
       {isAddModalOpen && (
@@ -637,6 +664,68 @@ const App = () => {
       {isPayrollModalOpen && (
         <div className="modal-overlay" onClick={(e) => e.target.className === "modal-overlay" && setIsPayrollModalOpen(false)}>
           <PayrollReportModal onClose={() => setIsPayrollModalOpen(false)} />
+        </div>
+      )}
+
+      {/* Leave Requests Modal */}
+      {isLeaveRequestsModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+          <div className="bg-white w-3/4 max-h-3/4 overflow-y-auto rounded-lg shadow-lg">
+            <div className="flex justify-between items-center p-4 bg-blue-600 text-white">
+              <h2 className="text-xl font-bold">Pending Leave Requests</h2>
+              <button
+                onClick={() => setIsLeaveRequestsModalOpen(false)}
+                className="text-sm bg-red-500 hover:bg-red-600 px-3 py-1 rounded"
+              >
+                Close
+              </button>
+            </div>
+            <div className="p-4">
+              {paginatedRequests.map((request) => (
+                <div
+                  key={request.id}
+                  className="p-4 mb-4 bg-gray-100 rounded-lg border border-gray-300 flex justify-between items-center"
+                >
+                  <div>
+                    <p className="text-gray-700">
+                      <span className="font-bold">{request.employee_name}</span> ({request.leave_type})
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      From: {request.start_date} To: {request.end_date}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setSelectedRequest(request);
+                      setIsApprovalModalOpen(true);
+                    }}
+                    className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded shadow"
+                  >
+                    Review
+                  </button>
+                </div>
+              ))}
+
+              {/* Pagination Controls */}
+              <div className="flex justify-center mt-4">
+                <button
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage((prev) => prev - 1)}
+                  className="bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded-l disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Previous
+                </button>
+                <span className="px-4 py-2 bg-white border">{currentPage}</span>
+                <button
+                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage((prev) => prev + 1)}
+                  className="bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded-r disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import "../FormStyles.css";
 
 const LeaveRequestForm = ({ onSubmit, onClose, selectedEmployee }) => {
   const [formData, setFormData] = useState({
@@ -16,66 +15,96 @@ const LeaveRequestForm = ({ onSubmit, onClose, selectedEmployee }) => {
   const handleSubmit = () => {
     console.log("Submit button clicked."); // Debugging log
     console.log("Form data:", formData); // Debugging log
-  
-    // Ensure selectedEmployee exists
+
     if (!selectedEmployee || !selectedEmployee.id) {
       alert("No employee selected. Please select an employee before requesting leave.");
       return;
     }
 
-    console.log("Selected employee in LeaveRequestForm:", selectedEmployee);
-  
-    // Validate required fields
     if (!formData.start_date || !formData.end_date) {
       alert("Please fill in all required fields.");
       return;
     }
-  
-    // Combine employee ID with form data
+
     const payload = {
       ...formData,
       employee_id: selectedEmployee.id,
     };
-  
+
     console.log("Payload to submit:", payload); // Debugging log
-    onSubmit(payload); // Pass the payload to the parent handler
+    onSubmit(payload);
   };
 
   return (
-    <div className="modal-content">
-      <h2>Request Leave</h2>
-      <form className="leave-form">
-        <label>
-          Leave Type:
-          <select name="leave_type" value={formData.leave_type} onChange={handleChange}>
+    <div className="bg-white p-6 rounded-lg shadow-md">
+      <h2 className="text-lg font-bold text-gray-700 mb-4">Request Leave</h2>
+      <form className="space-y-4">
+        {/* Leave Type */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Leave Type:</label>
+          <select
+            name="leave_type"
+            value={formData.leave_type}
+            onChange={handleChange}
+            className="mt-1 block w-full p-2 border border-gray-300 rounded shadow-sm focus:ring-blue-500 focus:border-blue-500"
+          >
             <option value="Sick">Sick</option>
             <option value="Vacation">Vacation</option>
             <option value="Personal">Personal</option>
           </select>
-        </label>
-        <label>
-          Start Date:
-          <input type="date" name="start_date" value={formData.start_date} onChange={handleChange} />
-        </label>
-        <label>
-          End Date:
-          <input type="date" name="end_date" value={formData.end_date} onChange={handleChange} />
-        </label>
-        <label>
-          Comments:
+        </div>
+
+        {/* Start Date */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Start Date:</label>
+          <input
+            type="date"
+            name="start_date"
+            value={formData.start_date}
+            onChange={handleChange}
+            className="mt-1 block w-full p-2 border border-gray-300 rounded shadow-sm focus:ring-blue-500 focus:border-blue-500"
+          />
+        </div>
+
+        {/* End Date */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700">End Date:</label>
+          <input
+            type="date"
+            name="end_date"
+            value={formData.end_date}
+            onChange={handleChange}
+            className="mt-1 block w-full p-2 border border-gray-300 rounded shadow-sm focus:ring-blue-500 focus:border-blue-500"
+          />
+        </div>
+
+        {/* Comments */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Comments:</label>
           <textarea
             name="comments"
             value={formData.comments}
             onChange={handleChange}
             placeholder="Optional comments..."
+            className="mt-1 block w-full p-2 border border-gray-300 rounded shadow-sm focus:ring-blue-500 focus:border-blue-500"
           ></textarea>
-        </label>
-        <div className="form-buttons">
-          <button type="button" className="submit-button" onClick={handleSubmit}>
-            Submit
-          </button>
-          <button type="button" className="cancel-button" onClick={onClose}>
+        </div>
+
+        {/* Buttons */}
+        <div className="flex justify-end space-x-4">
+          <button
+            type="button"
+            className="bg-gray-300 hover:bg-gray-400 text-black font-medium py-2 px-4 rounded"
+            onClick={onClose}
+          >
             Cancel
+          </button>
+          <button
+            type="button"
+            className="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded"
+            onClick={handleSubmit}
+          >
+            Submit
           </button>
         </div>
       </form>
