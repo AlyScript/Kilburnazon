@@ -3,7 +3,7 @@ import EmployeeCard from "./components/EmployeeCard";
 import EmployeeDetailsModal from "./components/EmployeeDetailsModal";
 import SearchFilter from "./components/SearchFilter";
 import AddEmployeeModal from "./components/AddEmployeeModal";
-import UpdateEmployeeModal from "./components/UpdateEmployeeModal";
+// import UpdateEmployeeModal from "./components/UpdateEmployeeModal";
 import LeaveRequestForm from "./components/LeaveRequestForm";
 import LeaveApprovalModal from "./components/LeaveApprovalModal";
 import PayrollReportModal from "./components/PayrollReportModal";
@@ -36,6 +36,8 @@ const App = () => {
   const [reportFilters, setReportFilters] = useState({ start_date: "", end_date: "" });
   const [currentUser, setCurrentUser] = useState(null);
   const [isLeaveRequestsModalOpen, setIsLeaveRequestsModalOpen] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [isNotificationsModalOpen, setIsNotificationsModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const requestsPerPage = 5;
   const totalPages = Math.ceil(leaveRequests.length / requestsPerPage);
@@ -43,7 +45,6 @@ const App = () => {
     (currentPage - 1) * requestsPerPage,
     currentPage * requestsPerPage
   );
-
 
   const fetchCurrentUser = async () => {
     try {
@@ -272,8 +273,7 @@ const App = () => {
     setFilteredEmployees(filtered);
   }, [filters, employees]);
 
-  const [notifications, setNotifications] = useState([]);
-
+  // Function to fetch notifications
   const fetchNotifications = async () => {
     try {
       const response = await fetch(
@@ -281,8 +281,15 @@ const App = () => {
       );
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
       const data = await response.json();
-      console.log("Fetched Notifications:", data); // Debugging
-      setNotifications(data);
+  
+      // Convert notifications object to an array
+      const notificationsArray = Object.keys(data).map((key) => ({
+        id: key,
+        ...data[key],
+      }));
+  
+      console.log("Fetched Notifications (Array):", notificationsArray); // Debugging
+      setNotifications(notificationsArray);
     } catch (err) {
       console.error("Error fetching notifications:", err);
     }
@@ -292,6 +299,11 @@ const App = () => {
     fetchNotifications();
   }, []);
 
+  // useEffect(() => {
+  //   fetchNotifications(); // Initial fetch
+  //   const interval = setInterval(fetchNotifications, 6000); // Refresh every 60 seconds
+  //   return () => clearInterval(interval); // Cleanup
+  // }, []);
   const markAsRead = async (notificationId) => {
     try {
       const response = await fetch(
@@ -304,24 +316,18 @@ const App = () => {
       );
   
       if (response.ok) {
-        setNotifications((prevNotifications) => {
-          const updatedNotifications = { ...prevNotifications };
-  
-          // Iterate through each manager's notifications
-          Object.keys(updatedNotifications).forEach((managerId) => {
-            updatedNotifications[managerId].notifications = updatedNotifications[managerId].notifications.filter(
-              (notif) => notif.id !== notificationId
-            );
-          });
-  
-          // Return the updated notifications object
-          return updatedNotifications;
-        });
+        // Backend succeeded; update state
+        setNotifications((prev) =>
+          prev.filter((notification) => notification.id !== notificationId)
+        );
+      } else {
+        console.error("Failed to mark notification as read.");
       }
     } catch (err) {
       console.error("Error marking notification as read:", err);
     }
   };
+
 
   // Handle leave request approval/denial
   const handleUpdateLeaveRequest = (id, decision, leaveType, totalDays) => {
@@ -387,6 +393,11 @@ const App = () => {
       return <Login onLogin={setCurrentUser} />;
     }
 
+    const handleOpenNotifications = () => {
+      console.log("Opening Notifications Modal with:", notifications);
+      setIsNotificationsModalOpen(true);
+    };
+
   return (
     <div className="app">
       {/* <h1>Employee Directory</h1> */}
@@ -430,36 +441,25 @@ const App = () => {
       >
         View Leave Requests
       </button>
-        {/* <button onClick={() => fetchLeaveRequests()}>Refresh Leave Requests</button> */}
-      </div>
-
-      {/* Notifications */}
-      <div className="notifications">
-      <h2>Notifications</h2>
-      {Object.keys(notifications).length > 0 ? (
-        Object.entries(notifications).map(([managerId, managerData]) => (
-          <div key={managerId} className="manager-notifications">
-            <h3>{managerData.manager_name}'s Notifications</h3>
-            <ul>
-              {managerData.notifications.map((notification) => (
-                <li key={notification.id}>
-                  <p>{notification.message}</p>
-                  <small>Created at: {new Date(notification.created_at).toLocaleString()}</small>
-                  <button
-                    onClick={() => markAsRead(notification.id)}
-                    className="mark-as-read-button"
-                  >
-                    Mark as Read
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))
-      ) : (
-        <p>No new notifications.</p>
-      )}
-      </div>
+      <button
+      onClick={() => setIsPayrollModalOpen(true)}
+      className="bg-indigo-500 hover:bg-indigo-600 px-4 py-2 rounded shadow"
+      >
+      Generate Payroll Report
+    </button>
+    <button
+    onClick={() => handleOpenNotifications()}
+    className="relative bg-gray-800 hover:bg-gray-900 px-4 py-2 rounded shadow"
+  >
+    Notifications
+    {console.log("Notifications State in Button Render:", notifications)}
+    {notifications.length > 0 && (
+      <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full">
+        {notifications.length}
+      </span>
+    )}
+  </button>
+  </div>
 
       {/* Filters and Employee Grid */}
       <div className="employee-grid">
@@ -480,41 +480,6 @@ const App = () => {
       )}
     </div>
 
-    {/* Leave Requests
-    <div className="mt-8 p-6 bg-white rounded-lg shadow-md">
-      <h2 className="text-2xl font-bold text-gray-800 mb-4">Pending Leave Requests</h2>
-      {leaveRequests.length > 0 ? (
-        <div className="space-y-4">
-          {leaveRequests.map((request) => (
-            <div
-              key={request.id}
-              className="p-4 bg-gray-100 rounded-lg border border-gray-300 hover:shadow-lg transition-shadow flex justify-between items-center"
-            >
-              <div>
-                <p className="text-gray-700">
-                  <span className="font-bold">{request.employee_name}</span> ({request.leave_type})
-                </p>
-                <p className="text-sm text-gray-500">
-                  From: {request.start_date} To: {request.end_date}
-                </p>
-              </div>
-              <button
-                onClick={() => {
-                  setSelectedRequest(request);
-                  setIsApprovalModalOpen(true);
-                }}
-                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded shadow"
-              >
-                Review
-              </button>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <p className="text-gray-500 text-center">No pending leave requests.</p>
-      )}
-    </div> */}
-
       {/* Add Employee Modal */}
       {isAddModalOpen && (
         <div className="modal-overlay" onClick={(e) => e.target.className === "modal-overlay" && setIsAddModalOpen(false)}>
@@ -532,21 +497,24 @@ const App = () => {
       )}
 
       {/* Update Employee Modal */}
-      {isUpdateModalOpen && selectedEmployee && (
-        <div className="modal-overlay" onClick={(e) => e.target.className === "modal-overlay" && setIsUpdateModalOpen(false)}>
-          <UpdateEmployeeModal
+      {selectedEmployee && (
+      <div
+        className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50"
+        onClick={(e) => {
+          // Close the modal when clicking outside the content
+          if (e.target.className.includes("bg-black")) {
+            setSelectedEmployee(null);
+          }
+        }}
+      >
+        <div className="bg-white w-1/3 p-6 rounded-lg shadow-lg">
+          <EmployeeDetailsModal
             employee={selectedEmployee}
-            onClose={() => setIsUpdateModalOpen(false)}
-            onUpdate={(id, position, salaryIncrease) => {
-              fetch("http://localhost/workshop/employee-directory/updateEmployee.php", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ id, position, salaryIncrease }),
-              }).then(() => fetchEmployees());
-            }}
+            onClose={() => setSelectedEmployee(null)} // Close modal on button click
           />
         </div>
-      )}
+      </div>
+    )}
 
       {/* Leave Request Form Modal */}
       {isLeaveRequestOpen && selectedEmployee && (
@@ -590,12 +558,12 @@ const App = () => {
       )}
 
       {/* Employee Details Modal */}
-      {selectedEmployee && (
-        <EmployeeDetailsModal
-          employee={selectedEmployee}
-          onClose={() => setSelectedEmployee(null)}
-        />
-      )}
+      <EmployeeDetailsModal
+      employee={selectedEmployee}
+      onClose={() => setSelectedEmployee(null)}
+      onPromote={() => setIsUpdateModalOpen(true)} // Set Promote modal state to true
+      onRequestLeave={() => setIsLeaveRequestOpen(true)} // Set Request Leave modal state to true
+    />
 
       {/* Absenteeism Report Modal */}
       {isReportModalOpen && (
@@ -654,11 +622,6 @@ const App = () => {
           </div>
         </div>
       )}
-
-      {/* Action Buttons */}
-      <div className="action-buttons">
-        <button onClick={() => setIsPayrollModalOpen(true)}>Generate Payroll Report</button>
-      </div>
 
       {/* Payroll Report Modal */}
       {isPayrollModalOpen && (
@@ -728,6 +691,45 @@ const App = () => {
           </div>
         </div>
       )}
+
+  {isNotificationsModalOpen && (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+      <div className="bg-white w-3/4 max-h-3/4 overflow-y-auto rounded-lg shadow-lg">
+        <div className="flex justify-between items-center p-4 bg-blue-600 text-white">
+          <h2 className="text-xl font-bold">Notifications</h2>
+          <button
+            onClick={() => setIsNotificationsModalOpen(false)}
+            className="text-sm bg-red-500 hover:bg-red-600 px-3 py-1 rounded"
+          >
+            Close
+          </button>
+        </div>
+        <div className="p-4">
+          {notifications.length > 0 ? (
+            <ul>
+              {notifications.map((notification) => (
+                <li
+                  key={notification.id}
+                  className="p-4 mb-4 bg-gray-100 rounded-lg border border-gray-300 flex justify-between items-center"
+                >
+                  <p>{notification.message}</p>
+                  <button
+                    onClick={() => markAsRead(notification.id)}
+                    className="text-blue-500 text-sm"
+                  >
+                    Mark as Read
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-gray-500">No new notifications.</p>
+          )}
+        </div>
+      </div>
+    </div>
+  )}
+
     </div>
   );
 };
